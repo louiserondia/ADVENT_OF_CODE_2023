@@ -2,21 +2,16 @@ defmodule FileReader do
 	def read_file(file_path) do
 		case File.read(file_path) do
 			{:ok, content} ->
-
-				# IO.puts("Content : #{content}")
 				lines = String.split(content, "\n")
 				result = each_line(lines, 0)
 				IO.puts("Result : #{result}")
-
 			{:error, reason} ->
 				IO.puts("Erreur lors de la lecture du fichier : #{reason}")
 		end
 	end
 
-	defp convert_to_number(word) do
-		# IO.puts(word)
+	defp to_number(word) do
 		case word do
-			"zero" -> "0"
 			"one" -> "1"
 			"two" -> "2"
 			"three" -> "3"
@@ -37,15 +32,11 @@ defmodule FileReader do
 
 		first =  Enum.at(Regex.run(regex_pattern, line), 0)
 		last = Enum.at(Regex.run(reverse_regex_pattern, reverse_line), 0) |> String.reverse()
-
-		parsed = Enum.join([convert_to_number(first), convert_to_number(last)])
+		parsed = Enum.join([to_number(first), to_number(last)])
 						|> Integer.parse()
 		case parsed do
-			{number, _} ->
-				number
-			_ ->
-				IO.puts("Impossible de convertir en nombre.")
-				0
+			{number, _} -> number
+			_ -> 0
 		end
 	end
 
@@ -53,9 +44,8 @@ defmodule FileReader do
 		if i < length(lines) do
 			res = scan_line(Enum.at(lines, i))
 			res + each_line(lines, i + 1)
-		else
-			0
 		end
+		0
 	end
 end
 
