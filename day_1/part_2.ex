@@ -10,8 +10,9 @@ defmodule FileReader do
 		end
 	end
 
-	defp to_number(word) do
+	defp convert_to_number(word) do
 		case word do
+			"zero" -> "0"
 			"one" -> "1"
 			"two" -> "2"
 			"three" -> "3"
@@ -29,10 +30,9 @@ defmodule FileReader do
 		regex_pattern = ~r/(one|two|three|four|five|six|seven|eight|nine|\d)/i
 		reverse_regex_pattern = ~r/(eno|owt|eerht|ruof|evif|xis|neves|thgie|enin|\d)/i
 		reverse_line= String.reverse(line)
-
 		first =  Enum.at(Regex.run(regex_pattern, line), 0)
 		last = Enum.at(Regex.run(reverse_regex_pattern, reverse_line), 0) |> String.reverse()
-		parsed = Enum.join([to_number(first), to_number(last)])
+		parsed = Enum.join([convert_to_number(first), convert_to_number(last)])
 						|> Integer.parse()
 		case parsed do
 			{number, _} -> number
@@ -44,9 +44,10 @@ defmodule FileReader do
 		if i < length(lines) do
 			res = scan_line(Enum.at(lines, i))
 			res + each_line(lines, i + 1)
+		else
+			0
 		end
-		0
 	end
 end
 
-FileReader.read_file("part2.txt")
+FileReader.read_file("input/part2.txt")

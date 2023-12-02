@@ -32,4 +32,4 @@ defmodule FileReader do
 	end
 end
 
-FileReader.read_file("part1.txt")
+FileReader.read_file("input/part1.txt")
