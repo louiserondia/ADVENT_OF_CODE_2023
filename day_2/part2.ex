@@ -6,7 +6,6 @@ defmodule FileReader do
           String.split(content, "\n")
           |> Enum.map(fn x -> String.split(x, ":") end)
           |> Enum.map(&parse_line/1)
-          |> Enum.filter(&(&1 != 0))
           |> Enum.sum()
 
         IO.inspect(result, label: "Result ")
@@ -16,18 +15,20 @@ defmodule FileReader do
     end
   end
 
-  defp too_much(n, color) do
-    case [n, color] do
-      [n, "red"] when n > 12 -> true
-      [n, "green"] when n > 13 -> true
-      [n, "blue"] when n > 14 -> true
-      _ -> false
+  defp biggest([], red, green, blue) do
+    red * green * blue
+  end
+
+  defp biggest([head | tail], red, green, blue) do
+    case head do
+      [n, "red"] when n > red -> biggest(tail, n, green, blue)
+      [n, "green"] when n > green -> biggest(tail, red, n, blue)
+      [n, "blue"] when n > blue -> biggest(tail, red, green, n)
+      _ -> biggest(tail, red, green, blue)
     end
   end
 
-  defp parse_line([head | tail]) do
-    trimed = String.replace(head, "Game ", "") |> String.to_integer()
-
+  defp parse_line([_head | tail]) do
     splited =
       Enum.join(tail)
       |> String.split(~r/[;,]/)
@@ -35,11 +36,8 @@ defmodule FileReader do
       |> Enum.map(&String.split(&1, " "))
       |> Enum.map(fn [head | rest] -> [String.to_integer(head) | rest] end)
 
-    res = Enum.map(splited, fn [head | rest] -> too_much(head, Enum.join(rest)) end)
-
-    case Enum.any?(res, & &1) do
-      true -> 0
-      false -> trimed
+    case splited do
+      [head | tail] -> biggest([head | tail], 0, 0, 0)
     end
   end
 end
