@@ -1,19 +1,6 @@
-defmodule FileReader do
-  def read_file(file_path) do
-    case File.read(file_path) do
-      {:ok, content} ->
-        lines = String.split(content, "\n")
-        result = each_line(lines, 0)
-        IO.puts("Result : #{result}")
-
-      {:error, reason} ->
-        IO.puts("Erreur lors de la lecture du fichier : #{reason}")
-    end
-  end
-
+defmodule AoC do
   defp convert_to_number(word) do
     case word do
-      "zero" -> "0"
       "one" -> "1"
       "two" -> "2"
       "three" -> "3"
@@ -30,28 +17,26 @@ defmodule FileReader do
   defp scan_line(line) do
     regex_pattern = ~r/(one|two|three|four|five|six|seven|eight|nine|\d)/i
     reverse_regex_pattern = ~r/(eno|owt|eerht|ruof|evif|xis|neves|thgie|enin|\d)/i
-    reverse_line = String.reverse(line)
-    first = Enum.at(Regex.run(regex_pattern, line), 0)
-    last = Enum.at(Regex.run(reverse_regex_pattern, reverse_line), 0) |> String.reverse()
+    first = Regex.run(regex_pattern, line) |> hd()
+    last = Regex.run(reverse_regex_pattern, String.reverse(line)) |> hd() |> String.reverse()
 
-    parsed =
-      Enum.join([convert_to_number(first), convert_to_number(last)])
-      |> Integer.parse()
-
-    case parsed do
-      {number, _} -> number
-      _ -> 0
-    end
+    Enum.join([convert_to_number(first), convert_to_number(last)])
+    |> String.to_integer()
   end
 
-  defp each_line(lines, i) do
-    if i < length(lines) do
-      res = scan_line(Enum.at(lines, i))
-      res + each_line(lines, i + 1)
-    else
-      0
+  defp solve(lines, i) when i < length(lines) do
+    res = scan_line(Enum.at(lines, i))
+    res + solve(lines, i + 1)
+  end
+
+  defp solve(_, _), do: 0
+
+  def read_file(file_path) do
+    with {:ok, content} <- File.read(file_path) do
+      lines = String.split(content, "\n")
+      solve(lines, 0)
     end
   end
 end
 
-FileReader.read_file("input/part2.txt")
+IO.puts("Result : #{AoC.read_file("input/part2.txt")}")

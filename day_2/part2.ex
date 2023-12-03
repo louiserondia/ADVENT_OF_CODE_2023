@@ -1,13 +1,4 @@
 defmodule AoC do
-  def read_file(file_path) do
-    with {:ok, content} <- File.read(file_path) do
-      String.split(content, "\n")
-      |> Enum.map(&String.split(&1, ":"))
-      |> Enum.map(&solve/1)
-      |> Enum.sum()
-    end
-  end
-
   defp biggest([], red, green, blue), do: red * green * blue
 
   defp biggest([head | tail], red, green, blue) do
@@ -28,6 +19,15 @@ defmodule AoC do
       |> Enum.map(fn [head | rest] -> [String.to_integer(head) | rest] end)
 
     biggest(splited, 0, 0, 0)
+  end
+end
+
+def read_file(file_path) do
+  with {:ok, content} <- File.read(file_path) do
+    String.split(content, "\n")
+    |> Enum.map(&String.split(&1, ":"))
+    |> Enum.map(&solve/1)
+    |> Enum.sum()
   end
 end
 
