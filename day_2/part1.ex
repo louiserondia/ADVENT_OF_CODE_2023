@@ -21,8 +21,7 @@ defmodule AoC do
       |> String.split(~r/[;,]/)
       |> Enum.map(&String.trim/1)
       |> Enum.map(&String.split(&1, " "))
-      |> Enum.map(fn [head | rest] -> [String.to_integer(head) | rest] end)
-      |> Enum.map(fn [head | rest] -> check(head, Enum.join(rest)) end)
+      |> Enum.map(fn [head | rest] -> check(String.to_integer(head), Enum.join(rest)) end)
 
     if Enum.any?(res), do: 0, else: trimed
   end
