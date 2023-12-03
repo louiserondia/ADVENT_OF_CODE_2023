@@ -16,14 +16,14 @@ defmodule AoC do
 
     if Enum.any?(res), do: 0, else: trimed
   end
-end
 
-def read_file(file_path) do
-  with {:ok, content} <- File.read(file_path) do
-    String.split(content, "\n")
-    |> Enum.map(&String.split(&1, ":"))
-    |> Enum.map(&solve/1)
-    |> Enum.sum()
+  def read_file(file_path) do
+    with {:ok, content} <- File.read(file_path) do
+      String.split(content, "\n")
+      |> Enum.map(&String.split(&1, ":"))
+      |> Enum.map(&solve/1)
+      |> Enum.sum()
+    end
   end
 end
 
