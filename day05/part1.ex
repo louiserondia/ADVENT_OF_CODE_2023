@@ -1,56 +1,38 @@
-
-
-
-
-
-
-
-
-
-
-
 defmodule AoC do
+  defp solve(num, []), do: num
 
-	defp solve(num, []), do: num
+  defp solve(num, [block | tail]) do
+    _num =
+      case Enum.find(block, fn [_d, s, l] -> num in s..(s + l - 1) end) do
+        nil -> solve(num, tail)
+        [d, s, _l] -> solve(d + (num - s), tail)
+      end
+  end
 
-	defp solve(num, [block | tail]) do
-		interesting = Enum.map(block, fn [d, s, l] ->
-			if s <= num && num < s + l, do: [d, s, l]
-		end)
-		|> Enum.filter(&(&1)) |> elem(0)
-		# elem(0) ou hd() ????? pour recup le dsl
+  def read_file(file_path) do
+    with {:ok, content} <- File.read(file_path) do
+      [head | tail] = String.split(content, "\r\n\r\n")
 
-		case interesting do
-			[d, s, l] ->
-				res = d + (num - s)
-				solve(res, tail)
-			_ -> solve(num, tail)
-		end
-	end
+      conv =
+        Enum.map(tail, fn block ->
+          String.split(block, "\r\n")
+          |> Enum.drop(1)
+          |> Enum.map(fn line ->
+            String.split(line)
+            |> Enum.map(&String.to_integer(&1))
+          end)
+        end)
 
-	def read_file(file_path) do
-		with {:ok, content} <- File.read(file_path) do
-			[seeds | converts] = String.split(content, "\n\n")
+      seeds =
+        String.split(head)
+        |> Enum.drop(1)
+        |> Enum.map(&String.to_integer(&1))
 
-			parsed_conv =
-				Enum.map(converts, fn a ->
-					String.split(a, "\n")
-					|> Enum.drop(b, 1)
-					|> Enum.map(fn c ->
-						String.split(c)
-						|> Enum.map(&String.to_integer(&1))
-					end)
-				end)
-
-			parsed_seeds = String.split(seeds)
-			|> Enum.drop(1)
-			|> Enum.map(&String.to_integer(&1))
-
-			Enum.map(parsed_seeds, fn seeds -> solve(seeds, parsed_conv, 0) end)
-			|> Enum.min()
-
-		end
-	end
+      Enum.map(seeds, &solve(&1, conv))
+      |> Enum.min()
+      |> IO.inspect(label: "Result ")
+    end
+  end
 end
 
-IO.puts("Result : #{AoC.read_file("part1.txt")}")
+AoC.read_file("input/part1.txt")
