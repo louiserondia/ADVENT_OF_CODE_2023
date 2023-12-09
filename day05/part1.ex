@@ -35,4 +35,4 @@ defmodule AoC do
   end
 end
 
-AoC.read_file("input/part1.txt")
+AoC.read_file("input.txt")

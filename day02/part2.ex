@@ -31,4 +31,4 @@ defmodule AoC do
   end
 end
 
-IO.puts("Result : #{AoC.read_file("input/part1.txt")}")
+IO.puts("Result : #{AoC.read_file("input.txt")}")

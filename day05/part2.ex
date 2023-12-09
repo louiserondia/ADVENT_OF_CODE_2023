@@ -13,7 +13,7 @@ defmodule AoC do
 
   defp solve(%{head => tail} = map, [block | tail]) do
 
-    
+
   end
 
   def read_file(file_path) do
@@ -45,4 +45,4 @@ defmodule AoC do
   end
 end
 
-AoC.read_file("input/part1.txt")
+AoC.read_file("input.txt")
