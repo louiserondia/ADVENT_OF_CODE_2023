@@ -9,7 +9,7 @@ defmodule AoC do
             nil -> line_acc <> "."
             _ -> line_acc <> char
           end
-        end) <> " - " <> Integer.to_string(max_y - y + 1) <> "\n"
+        end) <> " - " <> Integer.to_string(max_y - y) <> "\n"
     end)
     |> IO.puts()
 
@@ -64,7 +64,7 @@ defmodule AoC do
           end
         end)
         |> elem(1)
-        |> visualizer(max_x - 1, max_y - 1)
+        |> visualizer(max_x, max_y)
 
       Enum.reduce(res, 0, fn {{_, y}, c}, acc ->
         case c do
