@@ -1,8 +1,8 @@
 defmodule AoC do
   defp visualizer(data, max_x, max_y) do
-    Enum.reduce(0..max_y, "", fn y, acc ->
+    Enum.reduce(0..max_y - 1, "", fn y, acc ->
       acc <>
-        Enum.reduce(0..max_x, "", fn x, line_acc ->
+        Enum.reduce(0..max_x - 1, "", fn x, line_acc ->
           char = Enum.find_value(data, fn {{x1, y1}, c} -> if {x1, y1} == {x, y}, do: c end)
 
           case char do
