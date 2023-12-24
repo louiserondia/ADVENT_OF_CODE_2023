@@ -1,28 +1,25 @@
 defmodule AoC do
-  defp location(num, []), do: num
+  defp compute(seed, []), do: IO.inspect(seed)
 
-  defp location(num, [block | tail]) do
-    _num =
-      case Enum.find(block, fn [_d, s, l] -> num in s..(s + l - 1) end) do
-        nil -> location(num, tail)
-        [d, s, _l] -> location(d + (num - s), tail)
-      end
+  defp compute(seed, [conv | tail]) do
+    case Enum.find(conv, fn [_, s, l] -> seed in s..(s + l - 1) end) do
+      nil -> compute(seed, tail)
+      [d, s, _] -> compute(d + (seed - s), tail)
     end
-
-  defp solve(%{head => 0} = map, []), do: num
-
-  defp solve(%{head => tail} = map, [block | tail]) do
-
-
   end
 
-  def read_file(file_path) do
-    with {:ok, content} <- File.read(file_path) do
-      [head | tail] = String.split(content, "\r\n\r\n")
+  def solve(path) do
+    with {:ok, content} <- File.read(path) do
+      [head | tail] =
+        content
+        |> String.trim()
+        |> String.replace("\r", "")
+        |> String.split("\n\n")
 
       conv =
-        Enum.map(tail, fn block ->
-          String.split(block, "\r\n")
+        tail
+        |> Enum.map(fn lines ->
+          String.split(lines, "\n")
           |> Enum.drop(1)
           |> Enum.map(fn line ->
             String.split(line)
@@ -34,15 +31,18 @@ defmodule AoC do
         String.split(head)
         |> Enum.drop(1)
         |> Enum.map(&String.to_integer(&1))
-        |> Enum.chunk_every(2, 2, :discard)
-        # |> Enum.reduce(%{}, fn [key, value], acc -> Map.put(acc, key, value) end)
-        |> Enum.map(& Range.new(&1 |> List.first(), &1 |> List.last()))
+        |> Enum.chunk_every(2)
 
-      Enum.map(seeds, &solve(&1, conv))
+      Enum.map(seeds, fn [s, r] ->
+        0..r
+        |> Enum.map(fn i ->
+          compute(s + i, conv)
+        end)
+        |> Enum.min()
+      end)
       |> Enum.min()
-      |> IO.inspect(label: "Result ")
     end
   end
 end
 
-AoC.read_file("input.txt")
+IO.inspect(AoC.solve("input.txt"), label: "Result", charlists: :as_lists)
