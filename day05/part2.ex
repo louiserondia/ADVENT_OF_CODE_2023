@@ -1,5 +1,5 @@
 defmodule AoC do
-  defp compute(seed, []), do: IO.inspect(seed)
+  defp compute(seed, []), do: seed
 
   defp compute(seed, [conv | tail]) do
     case Enum.find(conv, fn [_, s, l] -> seed in s..(s + l - 1) end) do
@@ -19,25 +19,26 @@ defmodule AoC do
       conv =
         tail
         |> Enum.map(fn lines ->
-          String.split(lines, "\n")
+          lines
+          |> String.split("\n")
           |> Enum.drop(1)
           |> Enum.map(fn line ->
-            String.split(line)
+            line
+            |> String.split()
             |> Enum.map(&String.to_integer(&1))
           end)
         end)
 
       seeds =
-        String.split(head)
+        head
+        |> String.split()
         |> Enum.drop(1)
         |> Enum.map(&String.to_integer(&1))
         |> Enum.chunk_every(2)
 
       Enum.map(seeds, fn [s, r] ->
         0..r
-        |> Enum.map(fn i ->
-          compute(s + i, conv)
-        end)
+        |> Enum.map(fn i -> compute(s + i, conv) end)
         |> Enum.min()
       end)
       |> Enum.min()

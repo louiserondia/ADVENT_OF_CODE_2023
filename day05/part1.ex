@@ -1,38 +1,44 @@
 defmodule AoC do
-  defp solve(num, []), do: num
+  defp compute(seed, []), do: seed
 
-  defp solve(num, [block | tail]) do
-    _num =
-      case Enum.find(block, fn [_d, s, l] -> num in s..(s + l - 1) end) do
-        nil -> solve(num, tail)
-        [d, s, _l] -> solve(d + (num - s), tail)
-      end
+  defp compute(seed, [conv | tail]) do
+    case Enum.find(conv, fn [_, s, l] -> seed in s..(s + l - 1) end) do
+      nil -> compute(seed, tail)
+      [d, s, _] -> compute(d + (seed - s), tail)
+    end
   end
 
-  def read_file(file_path) do
-    with {:ok, content} <- File.read(file_path) do
-      [head | tail] = String.split(content, "\r\n\r\n")
+  def solve(path) do
+    with {:ok, content} <- File.read(path) do
+      [head | tail] =
+        content
+        |> String.trim()
+        |> String.replace("\r", "")
+        |> String.split("\n\n")
 
       conv =
-        Enum.map(tail, fn block ->
-          String.split(block, "\r\n")
+        tail
+        |> Enum.map(fn lines ->
+          lines
+          |> String.split("\n")
           |> Enum.drop(1)
           |> Enum.map(fn line ->
-            String.split(line)
+            line
+            |> String.split()
             |> Enum.map(&String.to_integer(&1))
           end)
         end)
 
       seeds =
-        String.split(head)
+        head
+        |> String.split()
         |> Enum.drop(1)
         |> Enum.map(&String.to_integer(&1))
 
-      Enum.map(seeds, &solve(&1, conv))
+      Enum.map(seeds, &compute(&1, conv))
       |> Enum.min()
-      |> IO.inspect(label: "Result ")
     end
   end
 end
 
-AoC.read_file("input.txt")
+IO.inspect(AoC.solve("input.txt"), label: "Result", charlists: :as_lists)
