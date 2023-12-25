@@ -1,36 +1,17 @@
 defmodule AoC do
-  defp traverse(data, elem, res, cache) do
-    # IO.inspect(elem)
-    # IO.inspect(cache)
-
+  defp traverse(data, elem) do
     data
     |> Enum.reduce([], fn {k, v}, acc ->
       case v |> Enum.member?(elem) || elem == k do
-        true -> acc ++ [{k, v}]
+        true -> acc ++ [[k] ++ [v]]
         _ -> acc
       end
     end)
-    |> Enum.map(fn {k, v} ->
-      if Enum.member?(cache, {k, v}) do
-        res
-      else
-        res = res |> MapSet.put(k)
-        cache = cache |> MapSet.put({k, v})
+    |> Enum.map(fn l ->
+      unless Agent.get(:cache, fn cache -> MapSet.member?(cache, l) end) do
+        Agent.update(:cache, fn cache -> cache |> MapSet.put(l) end)
 
-        # |> IO.inspect()
-        # res = res |> MapSet.put(e)
-
-        v
-        |> Enum.map(fn e ->
-          if e == elem do
-            res
-          else
-            traverse(data, e, res, cache)
-          end
-        end)
-
-        traverse(data, k, res, cache)
-        res
+        l |> Enum.map(fn e -> traverse(data, e) end)
       end
     end)
   end
@@ -48,7 +29,10 @@ defmodule AoC do
           Map.put(acc, k, v)
         end)
 
-      traverse(data, Map.keys(data) |> List.first(), MapSet.new(), MapSet.new())
+      Agent.start_link(fn -> MapSet.new() end, name: :cache)
+      traverse(data, Map.keys(data) |> List.first())
+      Agent.get(:cache, & &1)
+      # 1
     end
   end
 end
