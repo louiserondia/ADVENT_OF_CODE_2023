@@ -48,7 +48,6 @@ defmodule AoC do
       |> Enum.map(fn [s, n] ->
         generate(s, 0, n) |> Enum.filter(&(&1 != "")) |> Enum.count()
       end)
-
       |> Enum.sum()
     end
   end

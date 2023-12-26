@@ -1,12 +1,17 @@
 defmodule AoC do
-  defp compute(n, [], _seeds) do
-    n
+  defp compute(n, [], seeds) do
+    Enum.reduce(seeds, false, fn [s, r], acc ->
+      case acc do
+        true -> true
+        _ -> n in s..(s + r - 1)
+      end
+    end)
   end
 
   defp compute(n, [conv | tail], seeds) do
-    case Enum.find(conv, fn [_, s, l] -> n in s..(s + l - 1) end) do
+    case Enum.find(conv, fn [s, _, l] -> n in s..(s + l - 1) end) do
       nil -> compute(n, tail, seeds)
-      [d, s, _] -> compute(d + (n - s), tail, seeds)
+      [s, d, _] -> compute(d + (n - s), tail, seeds)
     end
   end
 
@@ -39,25 +44,13 @@ defmodule AoC do
         |> Enum.map(&String.to_integer(&1))
         |> Enum.chunk_every(2)
 
-      0..999
-      |> Enum.map(&compute(&1, conv, seeds))
-      |> Enum.filter(fn n ->
-        Enum.reduce(seeds, false, fn [s, r], acc ->
-          case acc do
-            true -> true
-            _ -> n in s..(s + r - 1)
-          end
-        end) == true
+      0..99_999_999
+      |> Enum.reduce_while(0, fn i, acc ->
+        case compute(i, conv, seeds) do
+          true -> {:halt, i}
+          _ -> {:cont, acc}
+        end
       end)
-
-      # |> Enum.min()
-
-      # Enum.map(seeds, fn [s, r] ->
-      #   0..r
-      #   |> Enum.map(fn i -> compute(s + i, conv) end)
-      #   |> Enum.min()
-      # end)
-      # |> Enum.min()
     end
   end
 end
