@@ -1,15 +1,13 @@
 defmodule AoC do
   defp links(prev, elem, group, duos) do
-    prev = prev |> Enum.reject(&(&1 == elem))
-
-    duos
-    |> Enum.reduce(prev, fn {l, r}, acc ->
-      case elem do
-        ^l -> unless Enum.member?(group, r), do: acc ++ [r], else: acc
-        ^r -> unless Enum.member?(group, l), do: acc ++ [l], else: acc
-        _ -> acc
-      end
-    end)
+    (prev |> Enum.reject(&(&1 == elem))) ++
+      Enum.reduce(duos, [], fn {l, r}, acc ->
+        cond do
+          elem == l and not Enum.member?(group, r) -> acc ++ [r]
+          elem == r and not Enum.member?(group, l) -> acc ++ [l]
+          true -> acc
+        end
+      end)
   end
 
   defp group(_, group, links) when length(links) == 3, do: length(group)
