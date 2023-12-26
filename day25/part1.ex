@@ -1,63 +1,48 @@
 defmodule AoC do
-  defp check_links(group, data, duos) do
-    if group
-       |> Enum.reduce(0, fn e, acc ->
-           acc +
-             (duos
-              |> Enum.count(fn {l, r} ->
-                (e == l && not Enum.member?(group, r)) || (e == r && not Enum.member?(group, l))
-              end))
-       end) == 3 do
-      IO.inspect(length(group) * (map_size(data) - length(group)))
-    end
+  defp links(prev, elem, group, duos) do
+    prev = prev |> Enum.reject(&(&1 == elem))
+
+    duos
+    |> Enum.reduce(prev, fn {l, r}, acc ->
+      case elem do
+        ^l -> unless Enum.member?(group, r), do: acc ++ [r], else: acc
+        ^r -> unless Enum.member?(group, l), do: acc ++ [l], else: acc
+        _ -> acc
+      end
+    end)
   end
 
-  defp group(group, elem, n, data, duos) do
-      unless length(group) == map_size(data) do
-      group = group ++ [elem]
-      if check_links(group, data, duos) == nil do
+  defp group(_, group, links) when length(links) == 3, do: length(group)
 
-        data[elem]
-        |> Enum.map(fn e ->
-          unless group |> Enum.member?(e) do
-            group(group, e, n + 1, data, duos)
-          end
-        end)
+  defp group(duos, group, []) do
+    start = Enum.random(group)
+    group(duos, [start], links([start], start, [start], duos))
+  end
+
+  defp group(duos, group, links) do
+    links
+    |> Enum.frequencies()
+    |> Map.to_list()
+    |> Enum.sort_by(fn {_, n} -> n end, :desc)
+    |> Enum.reduce_while(nil, fn {e, _}, _ ->
+      case group(duos, [e | group], links(links, e, [e | group], duos)) do
+        nil -> {:cont, nil}
+        res -> {:halt, res}
       end
-    end
-    1
+    end)
   end
 
   def solve(path) do
     with {:ok, content} <- File.read(path) do
-      data =
+      duos =
         content
         |> String.trim()
         |> String.replace("\r", "")
         |> String.split("\n")
         |> Enum.map(&String.split(&1, ":"))
-        |> Enum.reduce(%{}, fn [k, v], acc ->
-          v = v |> String.split()
-
-          acc =
-            case acc[k] do
-              nil -> acc |> Map.put(k, v)
-              r -> acc |> Map.replace(k, ([r] ++ [v]) |> List.flatten())
-            end
-
+        |> Enum.reduce(MapSet.new(), fn [k, v], a ->
           v
-          |> Enum.reduce(acc, fn val, a ->
-            case a[val] do
-              nil -> a |> Map.put(val, k)
-              res -> a |> Map.replace(val, ([res] ++ [k]) |> List.flatten())
-            end
-          end)
-        end)
-
-      duos =
-        data
-        |> Enum.reduce(MapSet.new(), fn {k, v}, a ->
-          v
+          |> String.split()
           |> Enum.reduce(a, fn val, acc ->
             case acc
                  |> Enum.find(fn {l, r} -> (k == l && val == r) || (k == r && val == l) end) do
@@ -67,9 +52,13 @@ defmodule AoC do
           end)
         end)
 
-      # Agent.start_link(fn -> MapSet.new() end, name: :group_cache)
-      # Agent.get(:group_cache, & MapSet.size/1)
-      group([], data |> Map.keys() |> List.last(), 1, data, duos)
+      all =
+        duos
+        |> Enum.reduce(MapSet.new(), fn {l, r}, acc -> acc |> MapSet.put(l) |> MapSet.put(r) end)
+
+      case group(duos, all |> MapSet.to_list(), []) do
+        r -> r * (MapSet.size(all) - r)
+      end
     end
   end
 end
