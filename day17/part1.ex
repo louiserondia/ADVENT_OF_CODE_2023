@@ -18,7 +18,7 @@ defmodule AoC do
     if n, do: print(n, cache)
   end
 
-  defp count({x, y}, dir, i, cache) do
+  defp count({x, y}, dir, i, cache) do # counts how many times we've gone in a certain dir
     prev = cache[{x, y}] |> elem(1)
 
     case {dir, prev} do
@@ -31,9 +31,9 @@ defmodule AoC do
   end
 
   defp traverse({x, y}, dirs, data, cache, {w, h}) do
-    {pdir, i} = count({x, y}, {0, 0}, 0, cache)
+    {pdir, i} = count({x, y}, {0, 0}, 0, cache) # get the dir we came from and how many times we've gone that way
 
-    next =
+    next = # Get the next possible directions, checks if they exist and if we haven't been that way 3 times
       dirs
       |> Enum.filter(fn {x1, y1} -> data[{x + x1, y + y1}] end)
       |> Enum.filter(fn dir -> dir != pdir || i != 3 end)
@@ -42,7 +42,7 @@ defmodule AoC do
     data = data |> Map.delete({x, y})
     cur_dist = cache[{x, y}] |> elem(0)
 
-    cache =
+    cache = # Updating cache with all scores, if we have a new way to go somewhere cheaper, it's updated in the cache
       next
       |> Enum.reduce(cache, fn n, acc ->
         next_dist = cur_dist + data[n]
@@ -57,7 +57,7 @@ defmodule AoC do
     if Enum.empty?(data) do
       cache
     else
-      next_dir =
+      next_dir = # Get the next spot to go to, it has to exist and be the lowest score and lowest dir ??
         cache
         |> Enum.filter(fn {k, _} -> data[k] end)
         |> Enum.min_by(fn {_, {v, _}} -> v end)
