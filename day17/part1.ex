@@ -12,50 +12,61 @@ defmodule AoC do
     |> Enum.reduce(%{}, fn {k, v}, acc -> acc |> Map.put(k, v) end)
   end
 
-  defp print(pos, cache) do
-    IO.inspect(pos)
-    n = cache[pos] |> elem(1)
-    if n, do: print(n, cache)
-  end
+  @dirs [
+    {0, -1},
+    {0, 1},
+    {-1, 0},
+    {1, 0}
+  ]
 
-  defp traverse({x, y}, {dx, dy}, dirs, data, cache, {w, h}) do
+  defp traverse({x, y}, {{dx, dy}, i}, data, cache, {w, h}) do
+    # Get the next possible directions,
+    # checks if they exist and if we haven't been that way 3 times
+    next =
+      @dirs
+      |> Enum.filter(fn {nx, ny} -> data[{x + nx, y + ny}] end)
+      |> Enum.filter(fn dir -> !(dir == {dx, dy} && i == 3) end)
+      |> Enum.filter(fn {dirx, diry} -> !(dirx == dx * -1 && diry == dy * -1) end)
 
-    next = # Get the next possible directions, checks if they exist and if we haven't been that way 3 times
-      dirs
-      |> Enum.filter(fn {x1, y1} -> data[{x + x1, y + y1}] end)
-      |> Enum.filter(fn dir -> not (dir == {dx, dy} && (abs(dx) == 3 || abs(dy) == 3)) end)
-      # |> Enum.map(fn {x1, y1} -> {x + x1, y + y1} end)
-
-    cache = # Updating cache with all scores, if we have a new way to go somewhere cheaper, it's updated in the cache
+    # Updating cache with all scores,
+    # if we have a new way to go somewhere cheaper, it's updated
+    cache =
       next
       |> Enum.reduce(cache, fn {nx, ny}, acc ->
         new_pos = {x + nx, y + ny}
-        new_score = cache[{{x, y}, {dx, xy}}] + data[new_pos]
-        next_dir = case {nx, ny} do
-          {0, ^dy} -> {0, (abs(dy) + 1) * y} #2e fois la même en verticale
-          {^dx, 0} -> {(abs(dx) + 1) * x, 0}
-          {^dx, y} when y < abs(dy) -> {0, (abs(dy) + 1) * y} #3e fois
-          {x, ^dy} when x < abs(dx) -> {(abs(dx) + 1) * x, 0}
-          {x, y} -> {x, y} # 1e fois, quand nx et ny sont != de dx, dy
-        end
+        score = (acc[{{x, y}, {{dx, dy}, i}}] |> elem(0)) + data[new_pos]
+        i = if {nx, ny} == {dx, dy}, do: i + 1, else: 1
+        cache_score = acc[{new_pos, {{nx, ny}, i}}]
 
-        if is_nil(acc[new_pos]) || new_score < acc[new_pos] |> elem(0) do
-          acc |> Map.put({new_pos, next_dir}, new_score)
-        else
+        double =
+          acc |> Enum.find(fn {{c, {d, _}}, _} -> c == new_pos && d == {nx, ny} end)
+
+        if cache_score || (double && double |> elem(0) |> elem(1) |> elem(1) < i) do
           acc
+        else
+          # if double && double |> elem(0) |> elem(1) |> elem(1) > i do
+          #   acc = acc |> Map.delete(double |> elem(0))
+          # end
+
+          acc |> Map.put({new_pos, {{nx, ny}, i}}, {score, false})
         end
       end)
 
-    if  do #si on a une valeur a cache[{w, h}, _] utiliser find ?
+    # si on a une valeur a cache[{w, h}, _], on arrête
+    if next |> Enum.find(fn {nx, ny} -> {x + nx, y + ny} == {w, h} end) do
       cache
     else
-      {npos, ndir} = # Get the next spot to go to, it has to exist and be the lowest score and lowest dir ??
+      # Get the next spot to go to, it has to exist and be the lowest score and lowest dir
+      {{npos, ndir}, {nscore, _}} =
         cache
-        |> Enum.filter(fn {{coord, _}, _} -> data[coord] end)
-        |> Enum.min_by(fn {_, v} -> v end)
-        |> elem(0)
+        |> Enum.filter(fn {{coord, _}, {_, have_been}} -> data[coord] && have_been == false end)
+        # |> Enum.sort_by(fn {{_, {_, i}}, {score, _}} -> {score, i} end)
+        |> Enum.min_by(fn {{{x, y}, {_, i}}, {score, _}} -> {score, i, -x, -y} end)
+        # |> IO.inspect()
 
-      traverse(npos, ndir, dirs, data, cache, {w, h})
+      cache = cache |> Map.put({npos, ndir}, {nscore, true})
+
+      traverse(npos, ndir, data, cache, {w, h})
     end
   end
 
@@ -74,20 +85,14 @@ defmodule AoC do
           {if(x > w, do: x, else: w), if(y > h, do: y, else: h)}
         end)
 
-      dirs = [
-        {0, -1},
-        {0, 1},
-        {-1, 0},
-        {1, 0}
-      ]
-
-      # r =
-         traverse({0, 0}, {0, 0}, dirs, data, %{{{0, 0}, nil} => 0}, {w, h})
-      # print({w, h}, r)
-      # r[{w, h}] |> elem(0)
-
+      traverse({0, 0}, {{0, 0}, 0}, data, %{{{0, 0}, {{0, 0}, 0}} => {0, true}}, {w, h})
+      # |> Enum.sort_by(fn {{coord, _}, _} -> coord end)
+      # |> IO.inspect()
+      |> Enum.find(fn {{coord, _}, _} -> coord == {w, h} end)
     end
   end
 end
 
-IO.inspect(AoC.solve("input.txt"), label: "Result")
+IO.inspect(AoC.solve("input.txt"), label: "\nResult")
+
+# retirer des possibilités (boucles, i < qui marche)
