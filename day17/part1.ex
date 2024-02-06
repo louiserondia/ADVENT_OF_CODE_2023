@@ -1,3 +1,45 @@
+defmodule Heap do
+  def push(heap, number) do
+    heap = heap |> Map.put(map_size(heap), number)
+    push_fix(heap, number, map_size(heap) - 1)
+  end
+
+  defp push_fix(heap, number, i) do
+    pi = div(i - 1, 2)
+    parent = heap[pi]
+
+    if parent && number < parent do
+      heap = heap |> Map.put(pi, number) |> Map.put(i, parent)
+      push_fix(heap, number, pi)
+    else
+      heap
+    end
+  end
+
+  def pop(heap) do
+    heap = heap |> Map.put(0, heap[map_size(heap) - 1]) |> Map.delete(map_size(heap) - 1)
+    pop_fix(heap, heap[0], 0)
+  end
+
+  defp pop_fix(heap, number, i) do
+    l = heap[i * 2 + 1]
+    r = heap[i * 2 + 2]
+
+    if (l && number > l) || (r && number > r) do
+      {next, ni} =
+        cond do
+          (l && r && l > r) || (!l && r) -> {r, i * 2 + 2}
+          true -> {l, i * 2 + 1}
+        end
+
+      heap = heap |> Map.put(ni, number) |> Map.put(i, next)
+      pop_fix(heap, number, ni)
+    else
+      heap
+    end
+  end
+end
+
 defmodule AoC do
   defp map2d(s) do
     s
@@ -19,54 +61,32 @@ defmodule AoC do
     {1, 0}
   ]
 
-  defp traverse({x, y}, {{dx, dy}, i}, data, cache, {w, h}) do
-    # Get the next possible directions,
-    # checks if they exist and if we haven't been that way 3 times
+  defp traverse({score, {x, y}, {{dx, dy}, i}}, cache, data, {w, h}) do
     next =
       @dirs
       |> Enum.filter(fn {nx, ny} -> data[{x + nx, y + ny}] end)
       |> Enum.filter(fn dir -> !(dir == {dx, dy} && i == 3) end)
       |> Enum.filter(fn {dirx, diry} -> !(dirx == dx * -1 && diry == dy * -1) end)
 
-    # Updating cache with all scores,
-    # if we have a new way to go somewhere cheaper, it's updated
     cache =
       next
       |> Enum.reduce(cache, fn {nx, ny}, acc ->
         new_pos = {x + nx, y + ny}
-        score = (acc[{{x, y}, {{dx, dy}, i}}] |> elem(0)) + data[new_pos]
+        new_score = score + data[new_pos]
         i = if {nx, ny} == {dx, dy}, do: i + 1, else: 1
-        cache_score = acc[{new_pos, {{nx, ny}, i}}]
 
-        double =
-          acc |> Enum.find(fn {{c, {d, _}}, _} -> c == new_pos && d == {nx, ny} end)
-
-        if cache_score || (double && double |> elem(0) |> elem(1) |> elem(1) < i) do
+        if acc |> Enum.find(fn {_, {_, c, d}} -> c == {x, y} && d == {{dx, dy}, i} end) do
           acc
         else
-          # if double && double |> elem(0) |> elem(1) |> elem(1) > i do
-          #   acc = acc |> Map.delete(double |> elem(0))
-          # end
-
-          acc |> Map.put({new_pos, {{nx, ny}, i}}, {score, false})
+          acc |> Heap.push({new_score, new_pos, {{nx, ny}, i}})
         end
       end)
 
-    # si on a une valeur a cache[{w, h}, _], on arrête
     if next |> Enum.find(fn {nx, ny} -> {x + nx, y + ny} == {w, h} end) do
       cache
     else
-      # Get the next spot to go to, it has to exist and be the lowest score and lowest dir
-      {{npos, ndir}, {nscore, _}} =
-        cache
-        |> Enum.filter(fn {{coord, _}, {_, have_been}} -> data[coord] && have_been == false end)
-        # |> Enum.sort_by(fn {{_, {_, i}}, {score, _}} -> {score, i} end)
-        |> Enum.min_by(fn {{{x, y}, {_, i}}, {score, _}} -> {score, i, -x, -y} end)
-        # |> IO.inspect()
-
-      cache = cache |> Map.put({npos, ndir}, {nscore, true})
-
-      traverse(npos, ndir, data, cache, {w, h})
+      cache = cache |> Heap.pop()
+      traverse(cache[0], cache, data, {w, h})
     end
   end
 
@@ -85,14 +105,15 @@ defmodule AoC do
           {if(x > w, do: x, else: w), if(y > h, do: y, else: h)}
         end)
 
-      traverse({0, 0}, {{0, 0}, 0}, data, %{{{0, 0}, {{0, 0}, 0}} => {0, true}}, {w, h})
-      # |> Enum.sort_by(fn {{coord, _}, _} -> coord end)
-      # |> IO.inspect()
-      |> Enum.find(fn {{coord, _}, _} -> coord == {w, h} end)
+      start = %{} |> Heap.push({0, {0, 0}, {{0, 0}, 0}})
+
+      traverse(start[0], start, data, {w, h})
+      |> Enum.find(fn {_, {_, coord, _}} -> coord == {w, h} end)
+      |> elem(1)
+      |> elem(0)
     end
   end
 end
 
-IO.inspect(AoC.solve("input.txt"), label: "\nResult")
-
-# retirer des possibilités (boucles, i < qui marche)
+AoC.solve("input.txt")
+|> IO.inspect(label: "\nResult")
