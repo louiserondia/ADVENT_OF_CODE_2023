@@ -52,7 +52,7 @@ defmodule AoC do
 
       [start, start + w, start + w * 2]
       |> Enum.map(fn x ->
-        {x, traverse(p0, data, w, x)} |> IO.inspect()
+        {x, traverse(p0, data, w, x)}
       end)
       |> lagrange(max)
     end
