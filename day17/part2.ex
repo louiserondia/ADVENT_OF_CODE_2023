@@ -65,8 +65,10 @@ defmodule AoC do
     next =
       @dirs
       |> Enum.filter(fn {nx, ny} -> data[{x + nx, y + ny}] end)
-      |> Enum.filter(fn dir -> !(dir == {dx, dy} && i == 3) end)
+      |> Enum.filter(fn dir -> !(dir == {dx, dy} && i == 10) end)
+      |> Enum.filter(fn dir -> !(dir != {dx, dy} && i < 4) || {dx, dy} == {0, 0} end)
       |> Enum.filter(fn {dirx, diry} -> !(dirx == dx * -1 && diry == dy * -1) end)
+
 
     {cache, map} =
       next
@@ -84,7 +86,8 @@ defmodule AoC do
         end
       end)
 
-    if next |> Enum.find(fn {nx, ny} -> {x + nx, y + ny} == {w, h} end) do
+    ndir = next |> Enum.find(fn {nx, ny} -> {x + nx, y + ny} == {w, h} end)
+    if ndir && ndir == {dx, dy} && i > 2 do
       cache
     else
       cache = cache |> Heap.pop()
