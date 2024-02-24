@@ -2,23 +2,11 @@ defmodule AoC do
   defp new_ranges(condition, ranges) do
     [k, n] = condition |> String.split(["<", ">"])
     n = n |> String.to_integer()
-
     first..last = ranges[k]
 
-    op = if condition |> String.contains?("<"), do: "<", else: ">"
-
-    cond do
-      (n < first && op == "<") || (n > last && op == ">") ->
-        nil
-
-      (n < first && op == ">") || (n > last && op == "<") ->
-        ranges |> IO.inspect(label: "yo")
-
-      op == "<" ->
-        {ranges |> Map.put(k, first..(n - 1)), ranges |> Map.put(k, n..last)}
-
-      true ->
-        {ranges |> Map.put(k, (n + 1)..last), ranges |> Map.put(k, first..n)}
+    case condition |> String.contains?("<") do
+      true -> {ranges |> Map.put(k, first..(n - 1)), ranges |> Map.put(k, n..last)}
+      _ -> {ranges |> Map.put(k, (n + 1)..last), ranges |> Map.put(k, first..n)}
     end
   end
 
@@ -30,23 +18,14 @@ defmodule AoC do
   defp traverse([[next]], rules, ranges), do: traverse(rules[next], rules, ranges)
 
   defp traverse([[condition, next] | tail], rules, ranges) do
-    case new_ranges(condition, ranges) do
-      nil ->
-        traverse(tail, rules, ranges)
+    {r1, r2} = new_ranges(condition, ranges)
 
-      ^ranges ->
-        if next == "A" or next == "R",
-          do: traverse([[next]], rules, ranges),
-          else: traverse(rules[next], rules, ranges)
+    res =
+      if next == "A" or next == "R",
+        do: traverse([[next]], rules, r1),
+        else: traverse(rules[next], rules, r1)
 
-      {r1, r2} ->
-        sum =
-          if next == "A" or next == "R",
-            do: traverse([[next]], rules, r1),
-            else: traverse(rules[next], rules, r1)
-
-        sum + traverse(tail, rules, r2)
-    end
+    res + traverse(tail, rules, r2)
   end
 
   def solve(file_path) do
@@ -67,7 +46,6 @@ defmodule AoC do
       ranges = %{"x" => 1..4000, "m" => 1..4000, "a" => 1..4000, "s" => 1..4000}
 
       traverse(rules["in"], rules, ranges)
-      # 0..10 |> Range.size()
     end
   end
 end
